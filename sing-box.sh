@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # 当前脚本版本号
-VERSION='v1.3.17 (2026.07.19)'
+VERSION='v1.3.18 (2026.07.19)'
 
 # Fork 维护信息。改成自己的 owner/repo 后，force_version 与 sb 快捷命令都会跟随你的仓库。
 PROJECT_REPO="${PROJECT_REPO:-qcmusic/sing-box}"
@@ -3819,7 +3819,7 @@ EOF_REALM
                     "password":"${UUID[12]}"
                 }
             ],
-            "ignore_client_bandwidth":true${HY2_REALM_CONFIG},
+            "ignore_client_bandwidth":false${HY2_REALM_CONFIG},
             "tls":{
                 "enabled":true,
                 "alpn":[
