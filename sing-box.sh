@@ -4587,7 +4587,7 @@ export_list() {
   local CERT_URL_1=$(awk '{printf "%s,", $0}' ${WORK_DIR}/cert/cert.pem | sed 's/ /%20/g; s/,$//') &&
   local CERT_URL_2=$(awk '{printf "%s\\r\\n", $0}' ${WORK_DIR}/cert/cert.pem)
   [ -s ${WORK_DIR}/cert/cert_200.pem ] &&
-  local CERT_200_URL_1=$(awk '{printf "%s,", $0}' ${WORK_DIR}/cert/cert_200.pem | sed 's/,$//') &&
+  local CERT_200_URL_1=$(awk '{printf "%s,", $0}' ${WORK_DIR}/cert/cert_200.pem | sed 's/ /%20/g; s/,$//') &&
   local CERT_200_URL_2=$(awk '{printf "%s\\r\\n", $0}' ${WORK_DIR}/cert/cert_200.pem)
 
   # 从自签证书的 SAN 中读取当前使用的 SNI，优先取 SAN，退回到 CN
