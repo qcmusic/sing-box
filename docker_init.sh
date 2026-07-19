@@ -4,6 +4,10 @@ set -e
 
 WORK_DIR=/sing-box
 PORT=$START_PORT
+PROJECT_REPO="${PROJECT_REPO:-qcmusic/sing-box}"
+PROJECT_BRANCH="${PROJECT_BRANCH:-main}"
+PROJECT_RAW_URL="${PROJECT_RAW_URL:-https://raw.githubusercontent.com/${PROJECT_REPO}/refs/heads/${PROJECT_BRANCH}}"
+FORCE_VERSION_URL="${FORCE_VERSION_URL:-${PROJECT_RAW_URL}/force_version}"
 SUBSCRIBE_TEMPLATE="https://raw.githubusercontent.com/fscarmen/client_template/main"
 
 # 自定义字体彩色，read 函数
@@ -27,7 +31,7 @@ esac
 # 检查 sing-box 最新版本
 check_latest_sing-box() {
   # 检查是否强制指定版本
-  local FORCE_VERSION=$(wget --no-check-certificate --tries=2 --timeout=3 -qO- https://raw.githubusercontent.com/fscarmen/sing-box/refs/heads/main/force_version | sed 's/^[vV]//g')
+  local FORCE_VERSION=$(wget --no-check-certificate --tries=2 --timeout=3 -qO- "$FORCE_VERSION_URL" | sed 's/^[vV]//g')
 
   # 没有强制指定版本时，获取最新版本
   if grep -q '.' <<< "$FORCE_VERSION"; then

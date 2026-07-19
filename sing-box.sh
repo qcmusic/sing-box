@@ -3,6 +3,13 @@
 # 当前脚本版本号
 VERSION='v1.3.16 (2026.07.16)'
 
+# Fork 维护信息。改成自己的 owner/repo 后，force_version 与 sb 快捷命令都会跟随你的仓库。
+PROJECT_REPO="${PROJECT_REPO:-qcmusic/sing-box}"
+PROJECT_BRANCH="${PROJECT_BRANCH:-main}"
+PROJECT_RAW_URL="${PROJECT_RAW_URL:-https://raw.githubusercontent.com/${PROJECT_REPO}/refs/heads/${PROJECT_BRANCH}}"
+SELF_SCRIPT_URL="${SELF_SCRIPT_URL:-${PROJECT_RAW_URL}/sing-box.sh}"
+FORCE_VERSION_URL="${FORCE_VERSION_URL:-${PROJECT_RAW_URL}/force_version}"
+
 # Github 反代加速代理
 GITHUB_PROXY=('https://hub.glowp.xyz/' 'https://proxy.vvvv.ee/')
 
@@ -2195,7 +2202,7 @@ check_system_info() {
 # 获取 sing-box 最新版本
 get_sing_box_version() {
   # FORCE_VERSION 用于在 sing-box 某个主程序出现 bug 时，强制为指定版本，以防止运行出错
-  local FORCE_VERSION=$(wget --no-check-certificate --tries=2 --timeout=3 -qO- ${GH_PROXY}https://raw.githubusercontent.com/fscarmen/sing-box/refs/heads/main/force_version | sed 's/^[vV]//g; s/\r//g')
+  local FORCE_VERSION=$(wget --no-check-certificate --tries=2 --timeout=3 -qO- ${GH_PROXY}${FORCE_VERSION_URL} | sed 's/^[vV]//g; s/\r//g')
   if grep -q '.' <<< "$FORCE_VERSION"; then
     local RESULT_VERSION="$FORCE_VERSION"
   else
@@ -5241,7 +5248,7 @@ create_shortcut() {
   cat > ${WORK_DIR}/sb.sh << EOF
 #!/usr/bin/env bash
 
-bash <(wget --no-check-certificate -qO- https://raw.githubusercontent.com/fscarmen/sing-box/main/sing-box.sh) \$@
+bash <(wget --no-check-certificate -qO- ${SELF_SCRIPT_URL}) "\$@"
 EOF
   chmod +x ${WORK_DIR}/sb.sh
   ln -sf ${WORK_DIR}/sb.sh /usr/bin/sb
