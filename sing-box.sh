@@ -3786,7 +3786,7 @@ EOF_REALM
                     "password":"${UUID[12]}"
                 }
             ],
-            "ignore_client_bandwidth":false${HY2_REALM_CONFIG},
+            "ignore_client_bandwidth":true${HY2_REALM_CONFIG},
             "tls":{
                 "enabled":true,
                 "alpn":[
