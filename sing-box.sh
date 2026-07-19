@@ -4813,7 +4813,7 @@ http3://$(echo -n "${UUID[22]}:${UUID[22]}@${SERVER_IP_2}:${PORT_NAIVE}" | base6
 vless://${UUID[11]}@${SERVER_IP_1}:${PORT_XTLS_REALITY}?encryption=none${VISION_FLOW}&security=reality&sni=${TLS_SERVER}&fp=${FINGER_PRINT}&pbk=${REALITY_PUBLIC[11]}&type=tcp&headerType=none#${NODE_NAME[11]// /%20}%20${NODE_TAG[0]}"
 
   if [ -n "$PORT_HYSTERIA2" ]; then
-    local V2RAYN_PARAMS="insecure=0&sni=${TLS_SERVER}&alpn=h3&pinSHA256=${SELF_SIGNED_FINGERPRINT_BASE64_URI}&upmbps=${HY2_UP:-200}&downmbps=${HY2_DOWN:-1000}"
+    local V2RAYN_PARAMS="insecure=1&allowInsecure=1&sni=${TLS_SERVER}&alpn=h3&pinSHA256=${SELF_SIGNED_FINGERPRINT_BASE64_URI}&upmbps=${HY2_UP:-200}&downmbps=${HY2_DOWN:-1000}"
     [[ -n "$PORT_HOPPING_START" && -n "$PORT_HOPPING_END" ]] && V2RAYN_PARAMS+="&mport=${PORT_HOPPING_START}-${PORT_HOPPING_END}&hop_interval=30s"
     local V2RAYN_SUBSCRIBE+="
 ----------------------------
@@ -4822,7 +4822,7 @@ hysteria2://${UUID[12]}@${SERVER_IP_1}:${PORT_HYSTERIA2}?${V2RAYN_PARAMS}#${NODE
 
   [ -n "$PORT_TUIC" ] && local V2RAYN_SUBSCRIBE+="
 ----------------------------
-tuic://${TUIC_PASSWORD}:${UUID[13]}@${SERVER_IP_1}:${PORT_TUIC}?congestion_control=$TUIC_CONGESTION_CONTROL&alpn=h3&sni=${TLS_SERVER}&udp_relay_mode=native&allow_insecure=0&security=tls&tls_certificate=${CERT_URL_1}#${NODE_NAME[13]// /%20}%20${NODE_TAG[2]}"
+tuic://${TUIC_PASSWORD}:${UUID[13]}@${SERVER_IP_1}:${PORT_TUIC}?congestion_control=$TUIC_CONGESTION_CONTROL&alpn=h3&sni=${TLS_SERVER}&udp_relay_mode=native&insecure=1&allowInsecure=1&allow_insecure=1&security=tls#${NODE_NAME[13]// /%20}%20${NODE_TAG[2]}"
 
   [ -n "$PORT_SHADOWTLS" ] && local V2RAYN_SUBSCRIBE+="
 ----------------------------
@@ -4877,7 +4877,7 @@ ss://$(echo -n "${SHADOWSOCKS_METHOD}:${SHADOWSOCKS_PASSWORD}@${SERVER_IP_1}:$PO
 
   [ -n "$PORT_TROJAN" ] && local V2RAYN_SUBSCRIBE+="
 ----------------------------
-trojan://${TROJAN_PASSWORD}@${SERVER_IP_1}:$PORT_TROJAN?security=tls&sni=${TLS_SERVER}&allowInsecure=0&tls_certificate=${CERT_URL_1}&fp=${FINGER_PRINT}&type=tcp#${NODE_NAME[16]// /%20}%20${NODE_TAG[5]}"
+trojan://${TROJAN_PASSWORD}@${SERVER_IP_1}:$PORT_TROJAN?security=tls&sni=${TLS_SERVER}&insecure=1&allowInsecure=1&fp=${FINGER_PRINT}&type=tcp#${NODE_NAME[16]// /%20}%20${NODE_TAG[5]}"
 
  if [ -n "$PORT_VMESS_WS" ]; then
     local VMESS_CDN_PORT=${CDN_PORT[17]:-80}
@@ -4919,23 +4919,19 @@ vless://${UUID[18]}@${VLESS_CDN_HOST}:${VLESS_CDN_PORT}?encryption=none&security
     fi
   fi
 
-  [ -n "$PORT_H2_REALITY" ] && local V2RAYN_SUBSCRIBE+="
-----------------------------
-vless://${UUID[19]}@${SERVER_IP_1}:${PORT_H2_REALITY}?encryption=none&security=reality&sni=${TLS_SERVER}&fp=${FINGER_PRINT}&pbk=${REALITY_PUBLIC[19]}&type=http&path=%2F&alpn=h2#${NODE_NAME[19]// /%20}%20${NODE_TAG[8]}"
-
   [ -n "$PORT_GRPC_REALITY" ] && local V2RAYN_SUBSCRIBE+="
 ----------------------------
 vless://${UUID[20]}@${SERVER_IP_1}:${PORT_GRPC_REALITY}?encryption=none&security=reality&sni=${TLS_SERVER}&fp=${FINGER_PRINT}&pbk=${REALITY_PUBLIC[20]}&type=grpc&serviceName=grpc&mode=gun#${NODE_NAME[20]// /%20}%20${NODE_TAG[9]}"
 
   [ -n "$PORT_ANYTLS" ] && local V2RAYN_SUBSCRIBE+="
 ----------------------------
-anytls://${UUID[21]}@${SERVER_IP_1}:${PORT_ANYTLS}?idle_session_check_interval=30s&idle_session_timeout=30s&min_idle_session=5&insecure=0&security=tls&sni=${TLS_SERVER}&tls_certificate=${CERT_URL_1}&fp=${FINGER_PRINT}#${NODE_NAME[21]// /%20}%20${NODE_TAG[10]}"
+anytls://${UUID[21]}@${SERVER_IP_1}:${PORT_ANYTLS}?idle_session_check_interval=30s&idle_session_timeout=30s&min_idle_session=5&insecure=1&allowInsecure=1&security=tls&sni=${TLS_SERVER}&fp=${FINGER_PRINT}#${NODE_NAME[21]// /%20}%20${NODE_TAG[10]}"
 
   [ -n "$PORT_NAIVE" ] && local V2RAYN_SUBSCRIBE+="
 ----------------------------
-naive+https://${UUID[22]}:${UUID[22]}@${SERVER_IP_1}:${PORT_NAIVE}?uot=1&security=tls&sni=${TLS_SERVER}&tls_certificate=${CERT_200_URL_1}#${NODE_NAME[22]// /%20}%20${NODE_TAG[11]}%20http2
+naive+https://${UUID[22]}:${UUID[22]}@${SERVER_IP_1}:${PORT_NAIVE}?uot=1&security=tls&sni=${TLS_SERVER}&insecure=1&allowInsecure=1#${NODE_NAME[22]// /%20}%20${NODE_TAG[11]}%20http2
 ----------------------------
-naive+quic://${UUID[22]}:${UUID[22]}@${SERVER_IP_1}:${PORT_NAIVE}?congestion_control=bbr&security=tls&sni=${TLS_SERVER}&tls_certificate=${CERT_200_URL_1}#${NODE_NAME[22]// /%20}%20${NODE_TAG[11]}%20quic"
+naive+quic://${UUID[22]}:${UUID[22]}@${SERVER_IP_1}:${PORT_NAIVE}?congestion_control=bbr&security=tls&sni=${TLS_SERVER}&insecure=1&allowInsecure=1#${NODE_NAME[22]// /%20}%20${NODE_TAG[11]}%20quic"
 
   echo -n "$V2RAYN_SUBSCRIBE" | sed '/-----BEGIN CERTIFICATE-----/,/-----END CERTIFICATE-----/d' | sed -E '/^[ ]*#|^[ ]+|^\{|^\}/d' | sed '/^$/d' | base64 -w0 > ${WORK_DIR}/subscribe/v2rayn
 
