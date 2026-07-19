@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # 当前脚本版本号
-VERSION='v1.3.16 (2026.07.16)'
+VERSION='v1.3.17 (2026.07.19)'
 
 # Fork 维护信息。改成自己的 owner/repo 后，force_version 与 sb 快捷命令都会跟随你的仓库。
 PROJECT_REPO="${PROJECT_REPO:-qcmusic/sing-box}"
@@ -18,6 +18,7 @@ TEMP_DIR='/tmp/sing-box'
 WORK_DIR='/etc/sing-box'
 FIREWALL_STATE_DIR="${WORK_DIR}/firewall"
 SERVICE_FIREWALL_STATE_FILE="${FIREWALL_STATE_DIR}/service_ports.list"
+NETWORK_TUNING_FILE='/etc/sysctl.d/99-sing-box-network.conf'
 START_PORT_DEFAULT='8881'
 MIN_PORT=100
 MAX_PORT=65520
@@ -29,7 +30,7 @@ NODE_TAG=("xtls-reality" "hysteria2" "tuic" "ShadowTLS" "shadowsocks" "trojan" "
 CONSECUTIVE_PORTS=${#PROTOCOL_LIST[@]}
 CDN_DOMAIN=("skk.moe" "ip.sb" "time.is" "cfip.xxxxxxxx.tk" "bestcf.top" "cdn.2020111.xyz" "xn--b6gac.eu.org" "cf.090227.xyz")
 SUBSCRIBE_TEMPLATE="https://raw.githubusercontent.com/fscarmen/client_template/main"
-DEFAULT_NEWEST_VERSION='1.13.0-rc.4'
+DEFAULT_NEWEST_VERSION='1.13.14'
 FINGER_PRINT='chrome'
 STEP_NUM=0      # 当前步骤编号（安装流程中动态递增）
 TOTAL_STEPS=''  # 总步骤数（协议确定后动态计算）
@@ -47,8 +48,8 @@ mkdir -p "$TEMP_DIR"
 
 E[0]="Language:\n 1. English (default) \n 2. 简体中文"
 C[0]="${E[0]}"
-E[1]="1. Add bind_interface option in sb -d menu to bind outbound traffic to a specific NIC; 2. Change v2rayN Hysteria2 Realm config from Finalmask field to ProtoExtraObj"
-C[1]="1. sb -d 菜单新增「指定网络出口」选项，可为出站流量绑定特定网卡; 2. v2rayN 的 Hysteria2 Realm 配置从 Finalmask 字段改为 ProtoExtraObj"
+E[1]="1. Install the latest stable sing-box release instead of prerelease builds; 2. Add lightweight UDP/QUIC network tuning for Hysteria2/TUIC/AnyTLS installs"
+C[1]="1. 安装 sing-box 时只选最新稳定版，避开 alpha / prerelease; 2. 安装时增加 HY2/TUIC/AnyTLS 的轻量 UDP/QUIC 网络优化"
 E[2]="Downloading Sing-box. Please wait a seconds ..."
 C[2]="下载 Sing-box 中，请稍等 ..."
 E[3]="Input errors up to 5 times.The script is aborted."
@@ -1896,6 +1897,50 @@ check_brutal() {
   [ "$IS_BRUTAL" = 'false' ] && command -v modprobe >/dev/null 2>&1 && modprobe brutal 2>/dev/null && IS_BRUTAL=true
 }
 
+apply_network_tuning() {
+  command -v sysctl >/dev/null 2>&1 || return 0
+  [ -d /proc/sys/net ] || return 0
+
+  mkdir -p "$(dirname "$NETWORK_TUNING_FILE")" 2>/dev/null || return 0
+  {
+    echo "# Managed by sing-box.sh."
+    echo "# Conservative network tuning for UDP/QUIC protocols: Hysteria2, TUIC, AnyTLS."
+  } > "$NETWORK_TUNING_FILE" 2>/dev/null || return 0
+
+  _append_sysctl() {
+    local KEY="$1"
+    local VALUE="$2"
+    local PROC_PATH="/proc/sys/${KEY//.//}"
+
+    [ -e "$PROC_PATH" ] || return 0
+    sysctl -w "$KEY=$VALUE" >/dev/null 2>&1 && echo "$KEY = $VALUE" >> "$NETWORK_TUNING_FILE"
+  }
+
+  if [ -e /proc/sys/net/core/default_qdisc ]; then
+    if sysctl -w net.core.default_qdisc=fq >/dev/null 2>&1; then
+      echo "net.core.default_qdisc = fq" >> "$NETWORK_TUNING_FILE"
+    elif sysctl -w net.core.default_qdisc=fq_codel >/dev/null 2>&1; then
+      echo "net.core.default_qdisc = fq_codel" >> "$NETWORK_TUNING_FILE"
+    fi
+  fi
+
+  command -v modprobe >/dev/null 2>&1 && modprobe tcp_bbr 2>/dev/null || true
+  if sysctl -n net.ipv4.tcp_available_congestion_control 2>/dev/null | tr ' ' '\n' | grep -qx bbr; then
+    _append_sysctl net.ipv4.tcp_congestion_control bbr
+  fi
+
+  _append_sysctl net.core.rmem_max 67108864
+  _append_sysctl net.core.wmem_max 67108864
+  _append_sysctl net.core.rmem_default 1048576
+  _append_sysctl net.core.wmem_default 1048576
+  _append_sysctl net.core.netdev_max_backlog 250000
+  _append_sysctl net.core.somaxconn 65535
+  _append_sysctl net.ipv4.udp_rmem_min 8192
+  _append_sysctl net.ipv4.udp_wmem_min 8192
+  _append_sysctl net.ipv4.tcp_fastopen 3
+  _append_sysctl net.ipv4.tcp_mtu_probing 1
+}
+
 # 查安装及运行状态，下标0: sing-box，下标1: argo，下标2: nginx；状态码: 26 未安装， 27 已安装未运行， 28 运行中
 check_install() {
   local PS_LIST=$(ps -eo pid,args | grep -E "$WORK_DIR.*([s]ing-box|[c]loudflared|[n]ginx)" | sed 's/^[ ]\+//g')
@@ -2220,11 +2265,11 @@ get_sing_box_version() {
   if grep -q '.' <<< "$FORCE_VERSION"; then
     local RESULT_VERSION="$FORCE_VERSION"
   else
-    # 先判断 github api 返回 http 状态码是否为 200，有时候 IP 会被限制，导致获取不到最新版本
-    local API_RESPONSE=$(wget --no-check-certificate --server-response --tries=2 --timeout=3 -qO- "${GH_PROXY}https://api.github.com/repos/SagerNet/sing-box/releases" 2>&1 | grep -E '^[ ]+HTTP/|tag_name')
+    # 使用 latest 接口只取最新稳定版，避免自动安装 alpha / prerelease 构建。
+    local API_RESPONSE=$(wget --no-check-certificate --server-response --tries=2 --timeout=3 -qO- "${GH_PROXY}https://api.github.com/repos/SagerNet/sing-box/releases/latest" 2>&1 | grep -E '^[ ]+HTTP/|tag_name')
     if grep -q 'HTTP.* 200' <<< "$API_RESPONSE"; then
-      local VERSION_LATEST=$(awk -F '["v-]' '/tag_name/{print $5}' <<< "$API_RESPONSE" | sort -Vr | sed -n '1p')
-      local RESULT_VERSION=$(awk -F '["v]' -v var="tag_name.*$VERSION_LATEST" '$0 ~ var {print $5; exit}' <<< "$API_RESPONSE")
+      local RESULT_VERSION=$(awk -F '"' '/tag_name/{gsub(/^[vV]/, "", $4); print $4; exit}' <<< "$API_RESPONSE")
+      RESULT_VERSION=${RESULT_VERSION:-"$DEFAULT_NEWEST_VERSION"}
     else
       local RESULT_VERSION="$DEFAULT_NEWEST_VERSION"
     fi
@@ -3541,7 +3586,6 @@ EOF
     cat > ${WORK_DIR}/conf/03_route.json << EOF
 {
     "route":{
-        "default_http_client": "http-client-direct",
         "rule_set":[
             {
                 "tag":"geosite-openai",
@@ -3618,17 +3662,6 @@ EOF
         "server_port": 123,
         "interval": "60m"
     }
-}
-EOF
-
-    # 专门给 sing-box 内部组件发 HTTP 请求用，比如这些场景会用到它：下载远程 rule_set：.srs 规则文件，ACME 申请证书，Cloudflare Origin CA 证书提供器，DERP / Tailscale 相关 HTTP 请求
-    cat > ${WORK_DIR}/conf/07_http_clients.json << EOF
-{
-    "http_clients": [
-        {
-            "tag": "http-client-direct"
-        }
-    ]
 }
 EOF
   fi
@@ -4503,6 +4536,9 @@ install_sing-box() {
 
   # 生成 Nginx 配置文件
   [ -n "$PORT_NGINX" ] && export_nginx_conf_file
+
+  # 应用 HY2 / TUIC / AnyTLS 等 UDP/QUIC 协议需要的轻量网络优化
+  apply_network_tuning
 
   # 系统启动 sing-box 服务
   cmd_systemctl enable sing-box
@@ -5635,6 +5671,9 @@ change_protocols() {
 
   # 打开防火墙相关端口
   sync_firewall_rules
+
+  # 应用 HY2 / TUIC / AnyTLS 等 UDP/QUIC 协议需要的轻量网络优化
+  apply_network_tuning
 
   # 等待服务启动
   sleep 3
