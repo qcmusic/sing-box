@@ -1280,10 +1280,6 @@ jq_exec() {
   fi
 }
 
-base64url_encode() {
-  base64 -w0 | tr '+/' '-_' | tr -d '='
-}
-
 # 更新 Hysteria2 服务端 Realm 模块
 set_hy2_realm_config() {
   local ACTION=$1
@@ -4590,7 +4586,6 @@ export_list() {
 
   local CERT_URL_1=$(awk '{printf "%s,", $0}' ${WORK_DIR}/cert/cert.pem | sed 's/ /%20/g; s/,$//') &&
   local CERT_URL_2=$(awk '{printf "%s\\r\\n", $0}' ${WORK_DIR}/cert/cert.pem)
-  local CERT_PEM=$(<"${WORK_DIR}/cert/cert.pem")
   [ -s ${WORK_DIR}/cert/cert_200.pem ] &&
   local CERT_200_URL_1=$(awk '{printf "%s,", $0}' ${WORK_DIR}/cert/cert_200.pem | sed 's/ /%20/g; s/,$//') &&
   local CERT_200_URL_2=$(awk '{printf "%s\\r\\n", $0}' ${WORK_DIR}/cert/cert_200.pem)
@@ -4818,59 +4813,11 @@ http3://$(echo -n "${UUID[22]}:${UUID[22]}@${SERVER_IP_2}:${PORT_NAIVE}" | base6
 vless://${UUID[11]}@${SERVER_IP_1}:${PORT_XTLS_REALITY}?encryption=none${VISION_FLOW}&security=reality&sni=${TLS_SERVER}&fp=${FINGER_PRINT}&pbk=${REALITY_PUBLIC[11]}&type=tcp&headerType=none#${NODE_NAME[11]// /%20}%20${NODE_TAG[0]}"
 
   if [ -n "$PORT_HYSTERIA2" ]; then
-    local HY2_PROTO_EXTRA
-    if [[ -n "$PORT_HOPPING_START" && -n "$PORT_HOPPING_END" ]]; then
-      HY2_PROTO_EXTRA=$(jq_exec -nc \
-        --argjson up "${HY2_UP:-200}" \
-        --argjson down "${HY2_DOWN:-1000}" \
-        --arg ports "${PORT_HOPPING_START}-${PORT_HOPPING_END}" \
-        --arg hop "30" \
-        '{UpMbps:$up, DownMbps:$down, Ports:$ports, HopInterval:$hop}')
-    else
-      HY2_PROTO_EXTRA=$(jq_exec -nc \
-        --argjson up "${HY2_UP:-200}" \
-        --argjson down "${HY2_DOWN:-1000}" \
-        '{UpMbps:$up, DownMbps:$down}')
-    fi
-    local V2RAYN_HY2=$(jq_exec -nc \
-      --arg remarks "${NODE_NAME[12]} ${NODE_TAG[1]}" \
-      --arg address "${SERVER_IP_1}" \
-      --arg password "${UUID[12]}" \
-      --arg sni "${TLS_SERVER}" \
-      --arg alpn "h3" \
-      --arg fp "${FINGER_PRINT}" \
-      --arg cert "$CERT_PEM" \
-      --argjson port "${PORT_HYSTERIA2}" \
-      --argjson protoExtra "$HY2_PROTO_EXTRA" \
-      --argjson configType 7 \
-      --argjson coreType 24 \
-      --argjson isSub true '
-      {
-        IndexId: "",
-        ConfigType: $configType,
-        CoreType: $coreType,
-        ConfigVersion: 4,
-        Subid: "",
-        IsSub: $isSub,
-        DisplayLog: true,
-        Remarks: $remarks,
-        Address: $address,
-        Port: $port,
-        Password: $password,
-        Username: "",
-        Network: "",
-        StreamSecurity: "tls",
-        AllowInsecure: "false",
-        Sni: $sni,
-        Alpn: $alpn,
-        Fingerprint: $fp,
-        Cert: $cert,
-        ProtoExtraObj: $protoExtra,
-        TransportExtraObj: {}
-      }' | base64url_encode)
+    local V2RAYN_PARAMS="insecure=1&allowInsecure=1&sni=${TLS_SERVER}&alpn=h3&pinSHA256=${SELF_SIGNED_FINGERPRINT_BASE64_URI}&upmbps=${HY2_UP:-200}&downmbps=${HY2_DOWN:-1000}"
+    [[ -n "$PORT_HOPPING_START" && -n "$PORT_HOPPING_END" ]] && V2RAYN_PARAMS+="&mport=${PORT_HOPPING_START}-${PORT_HOPPING_END}&hop_interval=30s"
     local V2RAYN_SUBSCRIBE+="
 ----------------------------
-v2rayn://hysteria2/${V2RAYN_HY2}#${NODE_NAME[12]// /%20}%20${NODE_TAG[1]}"
+hysteria2://${UUID[12]}@${SERVER_IP_1}:${PORT_HYSTERIA2}?${V2RAYN_PARAMS}#${NODE_NAME[12]// /%20}%20${NODE_TAG[1]}"
   fi
 
   [ -n "$PORT_TUIC" ] && local V2RAYN_SUBSCRIBE+="
@@ -4978,39 +4925,7 @@ vless://${UUID[20]}@${SERVER_IP_1}:${PORT_GRPC_REALITY}?encryption=none&security
 
   [ -n "$PORT_ANYTLS" ] && local V2RAYN_SUBSCRIBE+="
 ----------------------------
-v2rayn://anytls/$(jq_exec -nc \
-  --arg remarks "${NODE_NAME[21]} ${NODE_TAG[10]}" \
-  --arg address "${SERVER_IP_1}" \
-  --arg password "${UUID[21]}" \
-  --arg sni "${TLS_SERVER}" \
-  --arg fp "${FINGER_PRINT}" \
-  --arg cert "$CERT_PEM" \
-  --argjson port "${PORT_ANYTLS}" \
-  --argjson configType 11 \
-  --argjson coreType 24 \
-  --argjson isSub true '
-  {
-    IndexId: "",
-    ConfigType: $configType,
-    CoreType: $coreType,
-    ConfigVersion: 4,
-    Subid: "",
-    IsSub: $isSub,
-    DisplayLog: true,
-    Remarks: $remarks,
-    Address: $address,
-    Port: $port,
-    Password: $password,
-    Username: "",
-    Network: "",
-    StreamSecurity: "tls",
-    AllowInsecure: "false",
-    Sni: $sni,
-    Fingerprint: $fp,
-    Cert: $cert,
-    ProtoExtraObj: {},
-    TransportExtraObj: {}
-  }' | base64url_encode)#${NODE_NAME[21]// /%20}%20${NODE_TAG[10]}"
+anytls://${UUID[21]}@${SERVER_IP_1}:${PORT_ANYTLS}?idle_session_check_interval=30s&idle_session_timeout=30s&min_idle_session=5&insecure=1&allowInsecure=1&security=tls&sni=${TLS_SERVER}&fp=${FINGER_PRINT}#${NODE_NAME[21]// /%20}%20${NODE_TAG[10]}"
 
   [ -n "$PORT_NAIVE" ] && local V2RAYN_SUBSCRIBE+="
 ----------------------------
