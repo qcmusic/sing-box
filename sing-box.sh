@@ -2133,6 +2133,20 @@ cmd_systemctl() {
   fi
 }
 
+wait_systemctl_status() {
+  local SERVICE=$1
+  local ATTEMPTS=${2:-6}
+  local DELAY=${3:-2}
+  local i
+
+  for (( i=1; i<=ATTEMPTS; i++ )); do
+    cmd_systemctl status "$SERVICE" &>/dev/null && return 0
+    [ "$i" -lt "$ATTEMPTS" ] && sleep "$DELAY"
+  done
+
+  return 1
+}
+
 check_system_info() {
   [ -s /etc/os-release ] && SYS="$(awk -F '"' 'tolower($0) ~ /pretty_name/{print $2}' /etc/os-release)"
   [ -s /etc/os-release ] && OS_ID="$(awk -F '=' 'tolower($1) == "id" {gsub(/"/, "", $2); print tolower($2)}' /etc/os-release)"
@@ -4500,7 +4514,7 @@ install_sing-box() {
   sync_firewall_rules
 
   # 检查服务是否成功启动
-  if cmd_systemctl status sing-box &>/dev/null; then
+  if wait_systemctl_status sing-box 8 2; then
     STATUS[0]=$(text 28)
     info "\n Sing-box $(text 28) $(text 37) \n"
   else
@@ -4514,17 +4528,20 @@ install_sing-box() {
   if [ -s ${ARGO_DAEMON_FILE} ]; then
     cmd_systemctl enable argo
 
-    sleep 2
-
     # 检查 Argo 服务是否成功启动
-    if cmd_systemctl status argo &>/dev/null; then
+    if wait_systemctl_status argo 8 2; then
       STATUS[1]=$(text 28)
       info "\n Argo $(text 28) $(text 37) \n"
     else
-      STATUS[1]=$(text 27)
-      error "\n Argo $(text 27) $(text 38) \n"
       # 如果启动失败，再尝试重启
       cmd_systemctl restart argo
+      if wait_systemctl_status argo 8 2; then
+        STATUS[1]=$(text 28)
+        info "\n Argo $(text 28) $(text 37) \n"
+      else
+        STATUS[1]=$(text 27)
+        warning "\n Argo $(text 27) $(text 38) \n"
+      fi
     fi
   fi
 }
@@ -5737,8 +5754,7 @@ menu_setting() {
     } ||
     ACTION[2]() {
       cmd_systemctl enable sing-box
-      sleep 2
-      cmd_systemctl status sing-box &>/dev/null && info " Sing-box $(text 28) $(text 37)" || error " Sing-box $(text 28) $(text 38) "
+      wait_systemctl_status sing-box 8 2 && info " Sing-box $(text 28) $(text 37)" || error " Sing-box $(text 28) $(text 38) "
     }
 
     [ "${STATUS[1]}" = "$(text 28)" ] &&
@@ -5748,8 +5764,7 @@ menu_setting() {
     } ||
     ACTION[3]() {
       cmd_systemctl enable argo
-      sleep 2
-      cmd_systemctl status argo &>/dev/null &&  info " Argo $(text 28) $(text 37)" || error " Argo $(text 28) $(text 38) "
+      wait_systemctl_status argo 8 2 &&  info " Argo $(text 28) $(text 37)" || error " Argo $(text 28) $(text 38) "
       grep -qs '\--url' ${ARGO_DAEMON_FILE} && fetch_quicktunnel_domain && export_list
     }
 
@@ -5889,8 +5904,7 @@ for z in ${!ALL_PARAMETER[@]}; do
         cmd_systemctl status sing-box &>/dev/null && error " Sing-box $(text 27) $(text 38) " || info "\n Sing-box $(text 27) $(text 37)"
       elif [ "${STATUS[0]}" = "$(text 27)" ]; then
         cmd_systemctl enable sing-box
-        sleep 2
-        cmd_systemctl status sing-box &>/dev/null && info "\n Sing-box $(text 28) $(text 37)" || error "\n Sing-box $(text 28) $(text 38)"
+        wait_systemctl_status sing-box 8 2 && info "\n Sing-box $(text 28) $(text 37)" || error "\n Sing-box $(text 28) $(text 38)"
       fi
       exit 0
       ;;
@@ -5903,8 +5917,7 @@ for z in ${!ALL_PARAMETER[@]}; do
         cmd_systemctl status argo &>/dev/null && error " Argo $(text 27) $(text 38) " || info "\n Argo $(text 27) $(text 37)"
       elif [ "${STATUS[1]}" = "$(text 27)" ]; then
         cmd_systemctl enable argo
-        sleep 2
-        cmd_systemctl status argo &>/dev/null && info "\n Argo $(text 28) $(text 37)" || error "\n Argo $(text 28) $(text 38) "
+        wait_systemctl_status argo 8 2 && info "\n Argo $(text 28) $(text 37)" || error "\n Argo $(text 28) $(text 38) "
         grep -qs '\--url' ${ARGO_DAEMON_FILE} && fetch_quicktunnel_domain && export_list
       fi
       exit 0
