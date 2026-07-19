@@ -6013,6 +6013,14 @@ check_arch
 check_dependencies
 check_system_ip
 check_install
+
+if [[ "$NONINTERACTIVE_INSTALL" = 'noninteractive_install' || "$IS_FAST_INSTALL" = 'is_fast_install' ]] && [ "${STATUS[0]}" != "$(text 26)" ]; then
+  export_list
+  create_shortcut
+  info "\n $(text 77) \n"
+  exit 0
+fi
+
 if [ "$NONINTERACTIVE_INSTALL" = 'noninteractive_install' ]; then
   # 预设默认值，允许只传 --CHOOSE_PROTOCOLS 进行最小无交互安装。
   CHOOSE_PROTOCOLS=${CHOOSE_PROTOCOLS:-'a'}
