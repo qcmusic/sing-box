@@ -163,7 +163,7 @@
 
 ## 3.Sing-box for VPS 运行脚本:
 
-> Fork 维护者建议先阅读 [代码解析](docs/CODE_ANALYSIS.md) 和 [Fork 后维护指南](docs/FORK_SETUP.md)，并把脚本顶部的 `PROJECT_REPO` 改成自己的 `owner/repo`。
+> Fork 维护者建议先阅读 [代码解析](docs/CODE_ANALYSIS.md) 和 [Fork 后维护指南](docs/FORK_SETUP.md)。当前脚本已经指向 `qcmusic/sing-box`。
 
 * 首次运行
 ```
