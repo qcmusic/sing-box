@@ -42,7 +42,25 @@ bash <(wget -qO- https://raw.githubusercontent.com/qcmusic/sing-box/main/sing-bo
 bash <(wget -qO- https://raw.githubusercontent.com/qcmusic/sing-box/main/sing-box.sh) -k
 ```
 
-## 3. 本地检查
+## 3. 内置模板和外部脚本
+
+订阅模板已经放进当前仓库的 `client_template/` 目录，两个入口脚本默认从下面这个路径读取：
+
+```bash
+SUBSCRIBE_TEMPLATE="${SUBSCRIBE_TEMPLATE:-${PROJECT_RAW_URL}/client_template}"
+```
+
+因此 `clash`、`clash2`、`sing-box` 模板和 `qrencode-go` 不再依赖 `fscarmen/client_template`。
+
+为了避免安装菜单执行第三方远程一键脚本，以下外部选项已经禁用：
+
+- ArgoX 外部安装脚本
+- SBA 外部安装脚本
+- TCP brutal 外部安装脚本
+
+原来的 BBR/DD 菜单项已改成本脚本内置的本地网络优化，不再拉 `Linux-NetSpeed`。
+
+## 4. 本地检查
 
 每次改脚本后先跑：
 
@@ -53,7 +71,7 @@ bash -n docker_init.sh
 
 这只能检查 Bash 语法，不能保证 VPS 安装一定成功。涉及防火墙、systemd、Nginx、Argo、Reality、Hysteria2 的改动都要在测试 VPS 上实测。
 
-## 4. 测试 VPS 建议
+## 5. 测试 VPS 建议
 
 建议先用干净的 Debian 或 Ubuntu VPS 测：
 
@@ -70,7 +88,7 @@ sb -r
 sb -u
 ```
 
-## 5. 低风险改造顺序
+## 6. 低风险改造顺序
 
 1. 先改项目归属和 README。
 2. 再改默认端口、默认 CDN、默认协议集合。

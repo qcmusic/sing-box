@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 脚本更新日期 2026.06.27
+# 脚本更新日期 2026.07.21
 set -e
 
 WORK_DIR=/sing-box
@@ -8,7 +8,7 @@ PROJECT_REPO="${PROJECT_REPO:-qcmusic/sing-box}"
 PROJECT_BRANCH="${PROJECT_BRANCH:-main}"
 PROJECT_RAW_URL="${PROJECT_RAW_URL:-https://raw.githubusercontent.com/${PROJECT_REPO}/refs/heads/${PROJECT_BRANCH}}"
 FORCE_VERSION_URL="${FORCE_VERSION_URL:-${PROJECT_RAW_URL}/force_version}"
-SUBSCRIBE_TEMPLATE="https://raw.githubusercontent.com/fscarmen/client_template/main"
+SUBSCRIBE_TEMPLATE="${SUBSCRIBE_TEMPLATE:-${PROJECT_RAW_URL}/client_template}"
 
 # 自定义字体彩色，read 函数
 warning() { echo -e "\033[31m\033[01m$*\033[0m"; }  # 红色
@@ -59,7 +59,7 @@ install() {
 
   # 下载 qrencode
   echo "正在下载 qrencode ..."
-  wget -O ${WORK_DIR}/qrencode https://github.com/fscarmen/client_template/raw/main/qrencode-go/qrencode-go-linux-$QRENCODE_ARCH && chmod +x ${WORK_DIR}/qrencode
+  wget -O ${WORK_DIR}/qrencode ${SUBSCRIBE_TEMPLATE}/qrencode-go/qrencode-go-linux-$QRENCODE_ARCH && chmod +x ${WORK_DIR}/qrencode
 
   # 下载 cloudflared
   echo "正在下载 cloudflared ..."
@@ -1407,11 +1407,7 @@ $(${WORK_DIR}/qrencode https://${ARGO_DOMAIN}/${UUID}/auto)
   echo "$EXPORT_LIST_FILE" > ${WORK_DIR}/list
   cat ${WORK_DIR}/list
 
-  # 显示脚本使用情况数据
   hint "\n*******************************************\n"
-  local STAT=$(wget --no-check-certificate -qO- --timeout=3 "https://stat.cloudflare.now.cc/updateStats?script=sing-box-docker.sh")
-  [[ "$STAT" =~ \"todayCount\":([0-9]+),\"totalCount\":([0-9]+) ]] && local TODAY="${BASH_REMATCH[1]}" && local TOTAL="${BASH_REMATCH[2]}"
-  hint "\n 脚本当天运行次数: $TODAY，累计运行次数: $TOTAL \n"
 }
 
 # Sing-box 的最新版本

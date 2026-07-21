@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # 当前脚本版本号
-VERSION='v1.3.18 (2026.07.19)'
+VERSION='v1.3.19 (2026.07.21)'
 
 # Fork 维护信息。改成自己的 owner/repo 后，force_version 与 sb 快捷命令都会跟随你的仓库。
 PROJECT_REPO="${PROJECT_REPO:-qcmusic/sing-box}"
@@ -29,7 +29,7 @@ PROTOCOL_LIST=("XTLS + reality" "hysteria2" "tuic" "ShadowTLS" "shadowsocks" "tr
 NODE_TAG=("xtls-reality" "hysteria2" "tuic" "ShadowTLS" "shadowsocks" "trojan" "vmess-ws" "vless-ws-tls" "h2-reality" "grpc-reality" "anytls" "naive")
 CONSECUTIVE_PORTS=${#PROTOCOL_LIST[@]}
 CDN_DOMAIN=("skk.moe" "ip.sb" "time.is" "cfip.xxxxxxxx.tk" "bestcf.top" "cdn.2020111.xyz" "xn--b6gac.eu.org" "cf.090227.xyz")
-SUBSCRIBE_TEMPLATE="https://raw.githubusercontent.com/fscarmen/client_template/main"
+SUBSCRIBE_TEMPLATE="${SUBSCRIBE_TEMPLATE:-${PROJECT_RAW_URL}/client_template}"
 DEFAULT_NEWEST_VERSION='1.13.14'
 FINGER_PRINT='chrome'
 STEP_NUM=0      # 当前步骤编号（安装流程中动态递增）
@@ -48,18 +48,18 @@ mkdir -p "$TEMP_DIR"
 
 E[0]="Language:\n 1. English (default) \n 2. 简体中文"
 C[0]="${E[0]}"
-E[1]="1. Install the latest stable sing-box release instead of prerelease builds; 2. Add lightweight UDP/QUIC network tuning for Hysteria2/TUIC/AnyTLS installs"
-C[1]="1. 安装 sing-box 时只选最新稳定版，避开 alpha / prerelease; 2. 安装时增加 HY2/TUIC/AnyTLS 的轻量 UDP/QUIC 网络优化"
+E[1]="1. Vendor subscription templates in this fork; 2. Disable external one-click optional scripts; 3. Keep local UDP/QUIC tuning"
+C[1]="1. 订阅模板已内置到本 fork; 2. 禁用外部一键可选脚本; 3. 保留本地 UDP/QUIC 网络优化"
 E[2]="Downloading Sing-box. Please wait a seconds ..."
 C[2]="下载 Sing-box 中，请稍等 ..."
 E[3]="Input errors up to 5 times.The script is aborted."
 C[3]="输入错误达5次,脚本退出"
 E[4]="UUID should be 36 characters, please re-enter (\${UUID_ERROR_TIME} times remaining):"
 C[4]="UUID 应为36位字符,请重新输入 (剩余\${UUID_ERROR_TIME}次):"
-E[5]="The script supports Debian, Ubuntu, CentOS, Alpine, Armbian, Fedora or Arch systems only. Feedback: [https://github.com/fscarmen/sing-box/issues]"
-C[5]="本脚本只支持 Debian、Ubuntu、CentOS、Alpine、Armbian、Fedora 或 Arch 系统,问题反馈:[https://github.com/fscarmen/sing-box/issues]"
-E[6]="Curren operating system is \$SYS.\\\n The system lower than \$SYSTEM \${MAJOR[int]} is not supported. Feedback: [https://github.com/fscarmen/sing-box/issues]"
-C[6]="当前操作是 \$SYS\\\n 不支持 \$SYSTEM \${MAJOR[int]} 以下系统,问题反馈:[https://github.com/fscarmen/sing-box/issues]"
+E[5]="The script supports Debian, Ubuntu, CentOS, Alpine, Armbian, Fedora or Arch systems only. Feedback: [https://github.com/qcmusic/sing-box/issues]"
+C[5]="本脚本只支持 Debian、Ubuntu、CentOS、Alpine、Armbian、Fedora 或 Arch 系统,问题反馈:[https://github.com/qcmusic/sing-box/issues]"
+E[6]="Curren operating system is \$SYS.\\\n The system lower than \$SYSTEM \${MAJOR[int]} is not supported. Feedback: [https://github.com/qcmusic/sing-box/issues]"
+C[6]="当前操作是 \$SYS\\\n 不支持 \$SYSTEM \${MAJOR[int]} 以下系统,问题反馈:[https://github.com/qcmusic/sing-box/issues]"
 E[7]="Install dependence-list:"
 C[7]="安装依赖列表:"
 E[8]="All dependencies already exist and do not need to be installed additionally."
@@ -96,8 +96,8 @@ E[23]="Virtualization"
 C[23]="虚拟化"
 E[24]="Choose:"
 C[24]="请选择:"
-E[25]="Curren architecture \$(uname -m) is not supported. Feedback: [https://github.com/fscarmen/sing-box/issues]"
-C[25]="当前架构 \$(uname -m) 暂不支持,问题反馈:[https://github.com/fscarmen/sing-box/issues]"
+E[25]="Curren architecture \$(uname -m) is not supported. Feedback: [https://github.com/qcmusic/sing-box/issues]"
+C[25]="当前架构 \$(uname -m) 暂不支持,问题反馈:[https://github.com/qcmusic/sing-box/issues]"
 E[26]="Not install"
 C[26]="未安装"
 E[27]="close"
@@ -110,8 +110,8 @@ E[30]="Listen ports  (current: \${_val})"
 C[30]="监听端口  (当前: \${_val})"
 E[31]="Sync Sing-box to the latest version (sb -v)"
 C[31]="同步 Sing-box 至最新版本 (sb -v)"
-E[32]="Upgrade kernel, turn on BBR, change Linux system (sb -b)"
-C[32]="升级内核、安装BBR、DD脚本 (sb -b)"
+E[32]="Apply local network tuning (sb -b)"
+C[32]="应用本地网络优化 (sb -b)"
 E[33]="Uninstall (sb -u)"
 C[33]="卸载 (sb -u)"
 E[34]="Install Sing-box"
@@ -130,20 +130,20 @@ E[40]="Sing-box local verion: \$LOCAL\\\t The newest verion: \$ONLINE"
 C[40]="Sing-box 本地版本: \$LOCAL\\\t 最新版本: \$ONLINE"
 E[41]="No upgrade required."
 C[41]="不需要升级"
-E[42]="Downloading the latest version Sing-box failed, script exits. Feedback:[https://github.com/fscarmen/sing-box/issues]"
-C[42]="下载最新版本 Sing-box 失败，脚本退出，问题反馈:[https://github.com/fscarmen/sing-box/issues]"
-E[43]="The script must be run as root, you can enter sudo -i and then download and run again. Feedback:[https://github.com/fscarmen/sing-box/issues]"
-C[43]="必须以root方式运行脚本，可以输入 sudo -i 后重新下载运行，问题反馈:[https://github.com/fscarmen/sing-box/issues]"
+E[42]="Downloading the latest version Sing-box failed, script exits. Feedback:[https://github.com/qcmusic/sing-box/issues]"
+C[42]="下载最新版本 Sing-box 失败，脚本退出，问题反馈:[https://github.com/qcmusic/sing-box/issues]"
+E[43]="The script must be run as root, you can enter sudo -i and then download and run again. Feedback:[https://github.com/qcmusic/sing-box/issues]"
+C[43]="必须以root方式运行脚本，可以输入 sudo -i 后重新下载运行，问题反馈:[https://github.com/qcmusic/sing-box/issues]"
 E[44]="Ports are in used:  \${IN_USED[*]}"
 C[44]="正在使用中的端口: \${IN_USED[*]}"
 E[45]="Ports used: \${NOW_START_PORT} - \$((NOW_START_PORT+NOW_CONSECUTIVE_PORTS-1))"
 C[45]="使用端口: \${NOW_START_PORT} - \$((NOW_START_PORT+NOW_CONSECUTIVE_PORTS-1))"
 E[46]="Warp / warp-go was detected to be running. Please enter the correct server IP:"
 C[46]="检测到 warp / warp-go 正在运行，请输入确认的服务器 IP:"
-E[47]="No server ip, script exits. Feedback:[https://github.com/fscarmen/sing-box/issues]"
-C[47]="没有 server ip，脚本退出，问题反馈:[https://github.com/fscarmen/sing-box/issues]"
-E[48]="ShadowTLS - Copy the above two Neko links and manually set up the chained proxies in order. Tutorial: https://github.com/fscarmen/sing-box/blob/main/README.md#sekobox-%E8%AE%BE%E7%BD%AE-shadowtls-%E6%96%B9%E6%B3%95"
-C[48]="ShadowTLS - 复制上面两条 Neko links 进去，并按顺序手动设置链式代理，详细教程: https://github.com/fscarmen/sing-box/blob/main/README.md#sekobox-%E8%AE%BE%E7%BD%AE-shadowtls-%E6%96%B9%E6%B3%95"
+E[47]="No server ip, script exits. Feedback:[https://github.com/qcmusic/sing-box/issues]"
+C[47]="没有 server ip，脚本退出，问题反馈:[https://github.com/qcmusic/sing-box/issues]"
+E[48]="ShadowTLS - Copy the above two Neko links and manually set up the chained proxies in order. Tutorial: https://github.com/qcmusic/sing-box/blob/main/README.md#sekobox-%E8%AE%BE%E7%BD%AE-shadowtls-%E6%96%B9%E6%B3%95"
+C[48]="ShadowTLS - 复制上面两条 Neko links 进去，并按顺序手动设置链式代理，详细教程: https://github.com/qcmusic/sing-box/blob/main/README.md#sekobox-%E8%AE%BE%E7%BD%AE-shadowtls-%E6%96%B9%E6%B3%95"
 E[49]="Select more protocols to install (e.g. hgbd). The order of the port numbers of the protocols is related to the ordering of the multiple choices:\n a. all (default)"
 C[49]="多选需要安装协议(比如 hgbd)，协议的端口号次序与多选的排序有关:\n a. all (默认)"
 E[50]="Please enter the \$TYPE domain name:"
@@ -164,8 +164,8 @@ E[57]="Selecting the ws return method:\n 1. Argo (default)\n 2. Origin rules"
 C[57]="选择 ws 的回源方式:\n 1. Argo (默认)\n 2. Origin rules"
 E[58]="Memory Usage"
 C[58]="内存占用"
-E[59]="Install ArgoX scripts (argo + xray) [https://github.com/fscarmen/argox]"
-C[59]="安装 ArgoX 脚本 (argo + xray) [https://github.com/fscarmen/argox]"
+E[59]="ArgoX external installer disabled in this fork"
+C[59]="本 fork 已禁用 ArgoX 外部安装脚本"
 E[60]="The order of the selected protocols and ports is as follows:"
 C[60]="选择的协议及端口次序如下:"
 E[61]="There are no replaceable Argo tunnels."
@@ -184,8 +184,8 @@ E[67]="(3/3) Confirm all protocols for reloading."
 C[67]="(3/3) 确认重装的所有协议"
 E[68]="Press [n] if there is an error, other keys to continue:"
 C[68]="如有错误请按 [n]，其他键继续:"
-E[69]="Install sba scripts (argo + sing-box) [https://github.com/fscarmen/sba]"
-C[69]="安装 sba 脚本 (argo + sing-box) [https://github.com/fscarmen/sba]"
+E[69]="SBA external installer disabled in this fork"
+C[69]="本 fork 已禁用 SBA 外部安装脚本"
 E[70]="Please enter the reality private key (privateKey), skip to generate randomly:"
 C[70]="请输入 reality 的密钥(privateKey)，跳过则随机生成:"
 E[71]="Create shortcut [ sb ] successfully."
@@ -198,8 +198,8 @@ E[74]="Keep protocols"
 C[74]="保留协议"
 E[75]="Add protocols"
 C[75]="新增协议"
-E[76]="Install TCP brutal"
-C[76]="安装 TCP brutal"
+E[76]="TCP brutal external installer disabled in this fork"
+C[76]="本 fork 已禁用 TCP brutal 外部安装脚本"
 E[77]="With sing-box installed, the script exits."
 C[77]="已安装 sing-box ，脚本退出"
 E[78]="Parameter [ $ERROR_PARAMETER ] error, script exits."
@@ -218,8 +218,8 @@ E[84]="Set SElinux: enforcing --> disabled"
 C[84]="设置 SElinux: enforcing --> disabled"
 E[85]="Please enter Argo Token, Argo Json or Cloudflare API\n\n [*] Token: Visit https://dash.cloudflare.com/ , Zero Trust > Networks > Connectors > Create a tunnel > Select Cloudflared\n\n [*] Json: Users can easily obtain it through the following website: https://fscarmen.cloudflare.now.cc\n\n [*] Cloudflare API: Visit https://dash.cloudflare.com/profile/api-tokens > Create Token > Create Custom Token > Add the following permissions:\n - Account > Cloudflare One Connectors: cloudflared > Edit\n - Zone > DNS > Edit\n\n - Account Resources: Include > Required Account\n - Zone Resources: Include > Specific zone > Argo Root Domain"
 C[85]="请输入 Argo Token, Argo Json 或者 Cloudflare API\n\n [*] Token: 访问 https://dash.cloudflare.com/ ，Zero Trust > 网络 > 连接器 > 创建隧道 > 选择 Cloudflared\n\n [*] Json: 用户通过以下网站轻松获取: https://fscarmen.cloudflare.now.cc\n\n [*] Cloudflare API: 访问 https://dash.cloudflare.com/profile/api-tokens > 创建令牌 > 创建自定义令牌 > 添加以下权限:\n - 帐户 > Cloudflare One连接器: Cloudflared > 编辑\n - 区域 > DNS > 编辑\n\n - 帐户资源: 包括 > 所需账户\n - 区域资源: 包括 > 特定区域 > 所需域名"
-E[86]="Argo authentication message does not match the rules, neither Token nor Json, script exits. Feedback:[https://github.com/fscarmen/sba/issues]"
-C[86]="Argo 认证信息不符合规则，既不是 Token，也是不是 Json，脚本退出，问题反馈:[https://github.com/fscarmen/sba/issues]"
+E[86]="Argo authentication message does not match the rules, neither Token nor Json, script exits. Feedback:[https://github.com/qcmusic/sing-box/issues]"
+C[86]="Argo 认证信息不符合规则，既不是 Token，也是不是 Json，脚本退出，问题反馈:[https://github.com/qcmusic/sing-box/issues]"
 E[87]="Please input the Argo domain (Default is temporary domain if left blank):"
 C[87]="请输入 Argo 域名 (如果没有，可以跳过以使用 Argo 临时域名):"
 E[88]="Please input the Argo domain (cannot be empty):"
@@ -232,8 +232,8 @@ E[91]="Argo tunnel type:\n 1. Try\n 2. Token or Json. Including created through 
 C[91]="Argo 隧道类型:\n 1. Try\n 2. Token 或者 Json，包括通过 Cloudflare API 创建"
 E[92]="Change the Argo tunnel (sb -t)"
 C[92]="更换 Argo 隧道 (sb -t)"
-E[93]="Can't get the temporary tunnel domain, script exits. Feedback:[https://github.com/fscarmen/sing-box/issues]"
-C[93]="获取不到临时隧道的域名，脚本退出，问题反馈:[https://github.com/fscarmen/sing-box/issues]"
+E[93]="Can't get the temporary tunnel domain, script exits. Feedback:[https://github.com/qcmusic/sing-box/issues]"
+C[93]="获取不到临时隧道的域名，脚本退出，问题反馈:[https://github.com/qcmusic/sing-box/issues]"
 E[94]="Please bind \[\${ARGO_DOMAIN}] tunnel TYPE to HTTP and URL to \[\localhost:\${PORT_NGINX}] in Cloudflare."
 C[94]="请在 Cloudflare 绑定 \[\${ARGO_DOMAIN}] 隧道 TYPE 为 HTTP，URL 为 \[\localhost:\${PORT_NGINX}]"
 E[95]="netfilter-persistent installation failed, but the installation progress will not stop. portHopping forwarding rules are temporary rules, reboot may be invalidated."
@@ -390,12 +390,19 @@ E[171]="1. Default (not specified)"
 C[171]="1. 默认（不指定）"
 E[172]="Bound interface updated to: "
 C[172]="绑定接口已更新为: "
+E[173]="external installer is disabled in this fork."
+C[173]="外部安装脚本已在本 fork 中禁用。"
 
 # 自定义字体彩色，read 函数
 warning() { echo -e "\033[31m\033[01m$*\033[0m"; }  # 红色
 error() { echo -e "\033[31m\033[01m$*\033[0m" && exit 1; } # 红色
 info() { echo -e "\033[32m\033[01m$*\033[0m"; }   # 绿色
 hint() { echo -e "\033[33m\033[01m$*\033[0m"; }   # 黄色
+
+external_option_disabled() {
+  warning "\n $1 $(text 173) "
+  exit 0
+}
 reading() { read -rp "$(info "$1")" "$2"; }
 
 # 预处理：扫描 E/C 数组，把含 $ 的条目下标记录到关联数组，避免 text() 每次调用都启动 grep 子进程
@@ -524,14 +531,7 @@ check_chatgpt() {
 
 # 脚本当天及累计运行次数统计
 statistics_of_run_times() {
-  local UPDATE_OR_GET=$1
-  local SCRIPT=$2
-  if grep -q 'update' <<< "$UPDATE_OR_GET"; then
-    { wget --no-check-certificate -qO- --timeout=3 "https://stat.cloudflare.now.cc/updateStats?script=${SCRIPT}" > $TEMP_DIR/statistics 2>/dev/null || true; }&
-  elif grep -q 'get' <<< "$UPDATE_OR_GET"; then
-    [ -s $TEMP_DIR/statistics ] && [[ $(cat $TEMP_DIR/statistics) =~ \"todayCount\":([0-9]+),\"totalCount\":([0-9]+) ]] && local TODAY="${BASH_REMATCH[1]}" && local TOTAL="${BASH_REMATCH[2]}" && rm -f $TEMP_DIR/statistics
-    hint "\n *******************************************\n\n $(text 55) \n"
-  fi
+  return 0
 }
 
 # 选择中英语言
@@ -2047,7 +2047,7 @@ check_install() {
     # 任务 3: 下载 qrencode
     {
       wget --no-check-certificate --continue -qO $TEMP_DIR/qrencode \
-        ${GH_PROXY}https://github.com/fscarmen/client_template/raw/main/qrencode-go/qrencode-go-linux-$QRENCODE_ARCH 2>/dev/null \
+        ${GH_PROXY}${SUBSCRIBE_TEMPLATE}/qrencode-go/qrencode-go-linux-$QRENCODE_ARCH 2>/dev/null \
         && chmod +x $TEMP_DIR/qrencode
     } &
 
@@ -5806,12 +5806,12 @@ menu_setting() {
     ACTION[4]() { change_argo; exit; }
     ACTION[5]() { change_config; exit; }
     ACTION[6]() { version; exit; }
-    ACTION[7]() { bash <(wget --no-check-certificate -qO- ${GH_PROXY}https://raw.githubusercontent.com/ylx2016/Linux-NetSpeed/master/tcp.sh); exit; }
+    ACTION[7]() { apply_network_tuning; info " $(text 32) $(text 37) "; exit; }
     ACTION[8]() { change_protocols; exit; }
     ACTION[9]() { uninstall; exit; }
-    ACTION[10]() { bash <(wget --no-check-certificate -qO- ${GH_PROXY}https://raw.githubusercontent.com/fscarmen/argox/main/argox.sh) -$L; exit; }
-    ACTION[11]() { bash <(wget --no-check-certificate -qO- ${GH_PROXY}https://raw.githubusercontent.com/fscarmen/sba/main/sba.sh) -$L; exit; }
-    ACTION[12]() { bash <(wget --no-check-certificate -qO- https://tcp.hy2.sh/); exit; }
+    ACTION[10]() { external_option_disabled "ArgoX"; }
+    ACTION[11]() { external_option_disabled "SBA"; }
+    ACTION[12]() { external_option_disabled "TCP brutal"; }
   else
     OPTION[1]="1.  $(text 115)"
     OPTION[2]="2.  $(text 34) + Argo + $(text 80) $(text 89)"
@@ -5828,10 +5828,10 @@ menu_setting() {
     ACTION[3]() { IS_SUB=no_sub; IS_ARGO=is_argo; install_sing-box; export_list install; create_shortcut; exit; }
     ACTION[4]() { IS_SUB=is_sub; IS_ARGO=no_argo; install_sing-box; export_list install; create_shortcut; exit; }
     ACTION[5]() { install_sing-box; export_list install; create_shortcut; exit; }
-    ACTION[6]() { bash <(wget --no-check-certificate -qO- ${GH_PROXY}https://raw.githubusercontent.com/ylx2016/Linux-NetSpeed/master/tcp.sh); exit; }
-    ACTION[7]() { bash <(wget --no-check-certificate -qO- ${GH_PROXY}https://raw.githubusercontent.com/fscarmen/argox/main/argox.sh) -$L; exit; }
-    ACTION[8]() { bash <(wget --no-check-certificate -qO- ${GH_PROXY}https://raw.githubusercontent.com/fscarmen/sba/main/sba.sh) -$L; exit; }
-    ACTION[9]() { bash <(wget --no-check-certificate -qO- ${GH_PROXY}https://tcp.hy2.sh/); exit; }
+    ACTION[6]() { apply_network_tuning; info " $(text 32) $(text 37) "; exit; }
+    ACTION[7]() { external_option_disabled "ArgoX"; }
+    ACTION[8]() { external_option_disabled "SBA"; }
+    ACTION[9]() { external_option_disabled "TCP brutal"; }
   fi
 
   [ "${#OPTION[@]}" -ge '10' ] && OPTION[0]="0 .  $(text 35)" || OPTION[0]="0.  $(text 35)"
@@ -5973,7 +5973,7 @@ for z in ${!ALL_PARAMETER[@]}; do
       check_system_info; check_arch; version; exit 0
       ;;
     -B )
-      bash <(wget --no-check-certificate -qO- ${GH_PROXY}https://raw.githubusercontent.com/ylx2016/Linux-NetSpeed/master/tcp.sh); exit
+      apply_network_tuning; info " $(text 32) $(text 37) "; exit
       ;;
     -R )
       change_protocols; exit 0
