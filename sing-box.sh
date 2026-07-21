@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # 当前脚本版本号
-VERSION='v1.3.19 (2026.07.21)'
+VERSION='v1.3.20 (2026.07.21)'
 
 # Fork 维护信息。改成自己的 owner/repo 后，force_version 与 sb 快捷命令都会跟随你的仓库。
 PROJECT_REPO="${PROJECT_REPO:-qcmusic/sing-box}"
@@ -48,8 +48,8 @@ mkdir -p "$TEMP_DIR"
 
 E[0]="Language:\n 1. English (default) \n 2. 简体中文"
 C[0]="${E[0]}"
-E[1]="1. Vendor subscription templates in this fork; 2. Disable external one-click optional scripts; 3. Keep local UDP/QUIC tuning"
-C[1]="1. 订阅模板已内置到本 fork; 2. 禁用外部一键可选脚本; 3. 保留本地 UDP/QUIC 网络优化"
+E[1]="1. Add Qichen Technology menu logo; 2. Vendor subscription templates in this fork; 3. Disable external one-click optional scripts"
+C[1]="1. 新增启辰科技主菜单 Logo; 2. 订阅模板已内置到本 fork; 3. 禁用外部一键可选脚本"
 E[2]="Downloading Sing-box. Please wait a seconds ..."
 C[2]="下载 Sing-box 中，请稍等 ..."
 E[3]="Input errors up to 5 times.The script is aborted."
@@ -5838,8 +5838,23 @@ menu_setting() {
   ACTION[0]() { exit; }
 }
 
+show_qichen_logo() {
+  printf '\033[36;1m'
+  cat <<'EOF'
+      ____  _  ________                 ______          __
+     / __ \(_)/ ____/ /_  ___  ____    /_  __/__  _____/ /_
+    / / / / / /   / __ \/ _ \/ __ \    / / / _ \/ ___/ __ \
+   / /_/ / / /___/ / / /  __/ / / /   / / /  __/ /__/ / / /
+   \___\_\/_/\____/_/ /_/\___/_/ /_/   /_/  \___/\___/_/ /_/
+
+                         启 辰 科 技
+EOF
+  printf '\033[0m\n'
+}
+
 menu() {
   clear
+  show_qichen_logo
   echo -e "======================================================================================================================\n"
   info " $(text 17): $VERSION\n $(text 18): $(text 1)\n $(text 19):\n\t $(text 20): $SYS\n\t $(text 21): $(uname -r)\n\t $(text 22): $SING_BOX_ARCH\n\t $(text 23): $VIRT "
   info "\t IPv4: $WAN4 $WARPSTATUS4 $COUNTRY4  $ASNORG4 "
