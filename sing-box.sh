@@ -2672,13 +2672,13 @@ sing-box_variables() {
 # 将默认节点名按协议导出为稳定、易识别的编号名称。
 # 内部配置仍保留协议后缀，避免影响已有路由和脚本识别逻辑。
 normalize_default_node_names() {
-  local default_name_found=false name
-  for name in "${NODE_NAME[@]}"; do
-    [[ "$name" =~ ^sg新加坡超高速[0-9]+\|BGP\|流媒体$ ]] && default_name_found=true && break
-  done
-  [[ "$NODE_NAME_CONFIRM" = 'sg新加坡超高速' || "$NODE_NAME_CONFIRM" =~ ^sg新加坡超高速[0-9]+\|BGP\|流媒体$ || "$default_name_found" = true ]] || return 0
-
   local file
+  local has_default_name=false
+  for file in "${WORK_DIR}/list" "${WORK_DIR}"/subscribe/*; do
+    [ -f "$file" ] && grep -q 'sg新加坡超高速' "$file" && has_default_name=true && break
+  done
+  [ "$has_default_name" = true ] || return 0
+
   for file in "${WORK_DIR}/list" "${WORK_DIR}"/subscribe/*; do
     [ -f "$file" ] || continue
     sed -i -E \
@@ -5309,6 +5309,7 @@ $(${WORK_DIR}/qrencode $SUBSCRIBE_ADDRESS/${UUID_CONFIRM}/auto2)
 
   # 生成并显示节点信息
   echo "$EXPORT_LIST_FILE" > ${WORK_DIR}/list
+  wait
   normalize_default_node_names
   cat ${WORK_DIR}/list
 
