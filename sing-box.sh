@@ -2655,17 +2655,11 @@ sing-box_variables() {
   # 确认 UUID
   input_uuid
 
-  # 输入节点名，以系统的 hostname 作为默认
+  # 输入节点名。默认名称使用新加坡节点编号，导出订阅时按协议分配序号。
   local EMOJI="${EMOJI4:-$EMOJI6}"
   local EMOJI="${EMOJI}${EMOJI:+ }"
   if [ -z "$NODE_NAME_CONFIRM" ]; then
-    if command -v hostname >/dev/null 2>&1; then
-      local NODE_NAME_DEFAULT="${EMOJI}$(hostname)"
-    elif [ -s /etc/hostname ]; then
-      local NODE_NAME_DEFAULT="${EMOJI}$(cat /etc/hostname)"
-    else
-      local NODE_NAME_DEFAULT="${EMOJI}Sing-Box"
-    fi
+    local NODE_NAME_DEFAULT='sg新加坡超高速'
     [[ "$IS_FAST_INSTALL" = 'is_fast_install' || "$NONINTERACTIVE_INSTALL" = 'noninteractive_install' ]] && NODE_NAME_CONFIRM="${NODE_NAME_DEFAULT}"
     if [ -z "$NODE_NAME_CONFIRM" ]; then
       (( STEP_NUM++ )) || true
@@ -2673,6 +2667,31 @@ sing-box_variables() {
     fi
     grep -q '^$' <<< "$NODE_NAME" && NODE_NAME_CONFIRM="$NODE_NAME_DEFAULT" || NODE_NAME_CONFIRM="${EMOJI}${NODE_NAME}"
   fi
+}
+
+# 将默认节点名按协议导出为稳定、易识别的编号名称。
+# 内部配置仍保留协议后缀，避免影响已有路由和脚本识别逻辑。
+normalize_default_node_names() {
+  [ "$NODE_NAME_CONFIRM" = 'sg新加坡超高速' ] || return 0
+
+  local file
+  for file in "${WORK_DIR}/list" "${WORK_DIR}"/subscribe/*; do
+    [ -f "$file" ] || continue
+    sed -i -E \
+      -e 's/sg新加坡超高速(%20|[[:space:]])+xtls-reality/sg新加坡超高速2|BGP|流媒体/g' \
+      -e 's/sg新加坡超高速(%20|[[:space:]])+hysteria2/sg新加坡超高速1|BGP|流媒体/g' \
+      -e 's/sg新加坡超高速(%20|[[:space:]])+tuic/sg新加坡超高速3|BGP|流媒体/g' \
+      -e 's/sg新加坡超高速(%20|[[:space:]])+ShadowTLS/sg新加坡超高速4|BGP|流媒体/g' \
+      -e 's/sg新加坡超高速(%20|[[:space:]])+shadowsocks/sg新加坡超高速5|BGP|流媒体/g' \
+      -e 's/sg新加坡超高速(%20|[[:space:]])+trojan/sg新加坡超高速6|BGP|流媒体/g' \
+      -e 's/sg新加坡超高速(%20|[[:space:]])+vmess-ws/sg新加坡超高速7|BGP|流媒体/g' \
+      -e 's/sg新加坡超高速(%20|[[:space:]])+vless-ws-tls/sg新加坡超高速8|BGP|流媒体/g' \
+      -e 's/sg新加坡超高速(%20|[[:space:]])+h2-reality/sg新加坡超高速9|BGP|流媒体/g' \
+      -e 's/sg新加坡超高速(%20|[[:space:]])+grpc-reality/sg新加坡超高速10|BGP|流媒体/g' \
+      -e 's/sg新加坡超高速(%20|[[:space:]])+anytls/sg新加坡超高速11|BGP|流媒体/g' \
+      -e 's/sg新加坡超高速(%20|[[:space:]])+naive(%20|[[:space:]])+(http2|http3|quic)/sg新加坡超高速12|BGP|流媒体/g' \
+      "$file"
+  done
 }
 
 check_dependencies() {
@@ -5286,6 +5305,7 @@ $(${WORK_DIR}/qrencode $SUBSCRIBE_ADDRESS/${UUID_CONFIRM}/auto2)
 
   # 生成并显示节点信息
   echo "$EXPORT_LIST_FILE" > ${WORK_DIR}/list
+  normalize_default_node_names
   cat ${WORK_DIR}/list
 
   # 显示脚本使用情况数据
