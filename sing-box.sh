@@ -2672,24 +2672,24 @@ sing-box_variables() {
 # 将默认节点名按协议导出为稳定、易识别的编号名称。
 # 内部配置仍保留协议后缀，避免影响已有路由和脚本识别逻辑。
 normalize_default_node_names() {
-  [ "$NODE_NAME_CONFIRM" = 'sg新加坡超高速' ] || return 0
+  [[ "$NODE_NAME_CONFIRM" = 'sg新加坡超高速' || "$NODE_NAME_CONFIRM" =~ ^sg新加坡超高速[0-9]+\|BGP\|流媒体$ ]] || return 0
 
   local file
   for file in "${WORK_DIR}/list" "${WORK_DIR}"/subscribe/*; do
     [ -f "$file" ] || continue
     sed -i -E \
-      -e 's/sg新加坡超高速(%20|[[:space:]])+xtls-reality/sg新加坡超高速2|BGP|流媒体/g' \
-      -e 's/sg新加坡超高速(%20|[[:space:]])+hysteria2/sg新加坡超高速1|BGP|流媒体/g' \
-      -e 's/sg新加坡超高速(%20|[[:space:]])+tuic/sg新加坡超高速3|BGP|流媒体/g' \
-      -e 's/sg新加坡超高速(%20|[[:space:]])+ShadowTLS/sg新加坡超高速4|BGP|流媒体/g' \
-      -e 's/sg新加坡超高速(%20|[[:space:]])+shadowsocks/sg新加坡超高速5|BGP|流媒体/g' \
-      -e 's/sg新加坡超高速(%20|[[:space:]])+trojan/sg新加坡超高速6|BGP|流媒体/g' \
-      -e 's/sg新加坡超高速(%20|[[:space:]])+vmess-ws/sg新加坡超高速7|BGP|流媒体/g' \
-      -e 's/sg新加坡超高速(%20|[[:space:]])+vless-ws-tls/sg新加坡超高速8|BGP|流媒体/g' \
-      -e 's/sg新加坡超高速(%20|[[:space:]])+h2-reality/sg新加坡超高速9|BGP|流媒体/g' \
-      -e 's/sg新加坡超高速(%20|[[:space:]])+grpc-reality/sg新加坡超高速10|BGP|流媒体/g' \
-      -e 's/sg新加坡超高速(%20|[[:space:]])+anytls/sg新加坡超高速11|BGP|流媒体/g' \
-      -e 's/sg新加坡超高速(%20|[[:space:]])+naive(%20|[[:space:]])+(http2|http3|quic)/sg新加坡超高速12|BGP|流媒体/g' \
+      -e 's/sg新加坡超高速([0-9]+\|BGP\|流媒体)?(%20|[[:space:]])+xtls-reality/sg新加坡超高速2|BGP|流媒体/g' \
+      -e 's/sg新加坡超高速([0-9]+\|BGP\|流媒体)?(%20|[[:space:]])+hysteria2/sg新加坡超高速1|BGP|流媒体/g' \
+      -e 's/sg新加坡超高速([0-9]+\|BGP\|流媒体)?(%20|[[:space:]])+tuic/sg新加坡超高速3|BGP|流媒体/g' \
+      -e 's/sg新加坡超高速([0-9]+\|BGP\|流媒体)?(%20|[[:space:]])+ShadowTLS/sg新加坡超高速4|BGP|流媒体/g' \
+      -e 's/sg新加坡超高速([0-9]+\|BGP\|流媒体)?(%20|[[:space:]])+shadowsocks/sg新加坡超高速5|BGP|流媒体/g' \
+      -e 's/sg新加坡超高速([0-9]+\|BGP\|流媒体)?(%20|[[:space:]])+trojan/sg新加坡超高速6|BGP|流媒体/g' \
+      -e 's/sg新加坡超高速([0-9]+\|BGP\|流媒体)?(%20|[[:space:]])+vmess-ws/sg新加坡超高速7|BGP|流媒体/g' \
+      -e 's/sg新加坡超高速([0-9]+\|BGP\|流媒体)?(%20|[[:space:]])+vless-ws-tls/sg新加坡超高速8|BGP|流媒体/g' \
+      -e 's/sg新加坡超高速([0-9]+\|BGP\|流媒体)?(%20|[[:space:]])+h2-reality/sg新加坡超高速9|BGP|流媒体/g' \
+      -e 's/sg新加坡超高速([0-9]+\|BGP\|流媒体)?(%20|[[:space:]])+grpc-reality/sg新加坡超高速10|BGP|流媒体/g' \
+      -e 's/sg新加坡超高速([0-9]+\|BGP\|流媒体)?(%20|[[:space:]])+anytls/sg新加坡超高速11|BGP|流媒体/g' \
+      -e 's/sg新加坡超高速([0-9]+\|BGP\|流媒体)?(%20|[[:space:]])+naive(%20|[[:space:]])+(http2|http3|quic)/sg新加坡超高速12|BGP|流媒体/g' \
       "$file"
   done
 }
