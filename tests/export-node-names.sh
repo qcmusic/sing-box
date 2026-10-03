@@ -33,9 +33,11 @@ assert_name 11 'sg新加坡超高速2|BGP|流媒体'
 assert_name 15 'sg新加坡超高速4|BGP|流媒体'
 assert_name 20 'sg新加坡超高速8|BGP|流媒体'
 assert_name 21 'sg新加坡超高速9|BGP|流媒体'
-assert_name 22 'sg新加坡超高速10|BGP|流媒体'
-assert_name 23 'sg新加坡超高速11|BGP|流媒体'
-[[ -z ${EXPORT_NAME[14]:-} && -z ${EXPORT_NAME[19]:-} ]]
+[[ -z ${EXPORT_NAME[14]:-} && -z ${EXPORT_NAME[19]:-} && -z ${EXPORT_NAME[22]:-} ]]
+
+set_export_node_names sing-box
+assert_name 22 'sg新加坡超高速12|BGP|流媒体'
+assert_name 23 'sg新加坡超高速13|BGP|流媒体'
 
 PORT_TUIC=''
 PORT_SHADOWTLS=''

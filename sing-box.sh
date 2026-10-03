@@ -2676,7 +2676,7 @@ set_export_node_names() {
   case "$format" in
     clash) order=(12 11 13 14 15 16 17 18 19 20 21) ;;
     clash2) order=(12 11 13 14 15 16 17 18 20 21) ;;
-    v2rayn) order=(12 11 13 15 16 17 18 20 21 22) ;;
+    v2rayn) order=(12 11 13 15 16 17 18 20 21) ;;
   esac
 
   EXPORT_NAME=()
@@ -4985,7 +4985,7 @@ ss://$(echo -n "${SHADOWSOCKS_METHOD}:${SHADOWSOCKS_PASSWORD}@${SERVER_IP_1}:$PO
 
   [ -n "$PORT_TROJAN" ] && local V2RAYN_SUBSCRIBE+="
 ----------------------------
-trojan://${TROJAN_PASSWORD}@${SERVER_IP_1}:$PORT_TROJAN?security=tls&sni=${TLS_SERVER}&insecure=1&allowInsecure=1&fp=${FINGER_PRINT}&type=tcp#${EXPORT_URI_NAME[16]}"
+trojan://${TROJAN_PASSWORD}@${SERVER_IP_1}:$PORT_TROJAN?security=tls&sni=${TLS_SERVER}&pcs=${SELF_SIGNED_FINGERPRINT_SHA256}&fp=${FINGER_PRINT}&type=tcp#${EXPORT_URI_NAME[16]}"
 
  if [ -n "$PORT_VMESS_WS" ]; then
     local VMESS_CDN_PORT=${CDN_PORT[17]:-80}
@@ -5034,12 +5034,6 @@ vless://${UUID[20]}@${SERVER_IP_1}:${PORT_GRPC_REALITY}?encryption=none&security
   [ -n "$PORT_ANYTLS" ] && local V2RAYN_SUBSCRIBE+="
 ----------------------------
 anytls://${UUID[21]}@${SERVER_IP_1}:${PORT_ANYTLS}?idle_session_check_interval=30s&idle_session_timeout=30s&min_idle_session=5&insecure=1&allowInsecure=1&security=tls&sni=${TLS_SERVER}&fp=${FINGER_PRINT}#${EXPORT_URI_NAME[21]}"
-
-  [ -n "$PORT_NAIVE" ] && local V2RAYN_SUBSCRIBE+="
-----------------------------
-naive+https://${UUID[22]}:${UUID[22]}@${SERVER_IP_1}:${PORT_NAIVE}?uot=1&security=tls&sni=${TLS_SERVER}&insecure=1&allowInsecure=1#${EXPORT_URI_NAME[22]}
-----------------------------
-naive+quic://${UUID[22]}:${UUID[22]}@${SERVER_IP_1}:${PORT_NAIVE}?congestion_control=bbr&security=tls&sni=${TLS_SERVER}&insecure=1&allowInsecure=1#${EXPORT_URI_NAME[23]}"
 
   V2RAYN_SUBSCRIBE=$(move_hysteria_first "$V2RAYN_SUBSCRIBE")
   echo -n "$V2RAYN_SUBSCRIBE" | sed '/-----BEGIN CERTIFICATE-----/,/-----END CERTIFICATE-----/d' | sed -E '/^[ ]*#|^[ ]+|^\{|^\}/d' | sed '/^$/d' | base64 -w0 > ${WORK_DIR}/subscribe/v2rayn
